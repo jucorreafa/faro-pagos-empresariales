@@ -49,7 +49,7 @@ services:
     name: faro-uide-api
     runtime: docker
     plan: free
-    region: virginia
+    region: oregon
     rootDir: servicios/faro-api
     dockerfilePath: ./servicios/faro-api/Dockerfile
     dockerContext: ./servicios/faro-api
