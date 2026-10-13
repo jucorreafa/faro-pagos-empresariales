@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2 } from 'lucide-react';
+import { Building2, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { Cargando, Problema } from '../componentes/comunes.jsx';
 import { dinero, hora } from '../api.js';
 import { useSondeo } from '../hooks.js';
@@ -28,43 +28,51 @@ export default function Cuenta() {
 
   return (
     <>
-      <h1>Mi cuenta</h1>
-      <p className="idea" style={{ marginTop: 8 }}>Cada estudiante es empleado de Andes Café y tiene su cuenta en el Banco Andino. Cuando el docente pague la nómina, tu sueldo aparece aquí.</p>
-
-      <label htmlFor="quien" style={{ display: 'block', fontWeight: 700, margin: '16px 0 6px' }}>¿Quién eres?</label>
-      <select id="quien" value={cuenta} onChange={(e) => elegir(e.target.value)} style={{ maxWidth: 420 }}>
-        <option value="">Elige tu nombre</option>
-        {personas.map((c) => <option key={c.numero} value={c.numero}>{c.nombre}{c.equipo ? ` · ${c.equipo}` : ''}</option>)}
-      </select>
-      {clientes.error && <Problema error={clientes.error} />}
-
-      {cuenta && (
-        <div className="pantalla-banco" style={{ marginTop: 18, maxWidth: 560 }}>
-          <header><Building2 size={20} aria-hidden /> Banco Andino · Banca en línea</header>
+      <header className="encabezado">
+        <h1>Mi cuenta</h1>
+        <p className="lead">Cada estudiante es empleado de Andes Café y tiene su cuenta en el Banco Andino. Cuando el docente pague la nómina, el sueldo aparece aquí.</p>
+      </header>
+      <div className="estacion">
+        <div className="pantalla-banco">
+          <header><Building2 size={18} aria-hidden /> Banco Andino · Banca en línea</header>
           <div className="cuerpo">
-            {!detalle.datos ? <Cargando texto="Consultando tu cuenta…" /> : (
+            {!cuenta && <p className="chico">Elige tu nombre para ver tu cuenta.</p>}
+            {cuenta && !detalle.datos && <Cargando texto="Consultando tu cuenta…" />}
+            {detalle.datos && (
               <>
-                <span className="chico">Cuenta de ahorros {detalle.datos.numero} · {detalle.datos.nombre}</span>
-                <div className={`saldo ${subio ? 'subio' : ''}`} aria-live="polite">{dinero(detalle.datos.saldo)}</div>
-                <span className="chico">Saldo disponible [SIMULADO]</span>
-                <h3 style={{ marginTop: 18 }}>Movimientos</h3>
+                <div>
+                  <span className="chico">Cuenta de ahorros {detalle.datos.numero} · {detalle.datos.nombre}</span>
+                  <div className={`saldo ${subio ? 'subio' : ''}`} aria-live="polite" style={{ marginTop: 6 }}>{dinero(detalle.datos.saldo)}</div>
+                  <span className="chico">Saldo disponible [SIMULADO]</span>
+                </div>
+                <div className="separador" />
+                <h4>Movimientos</h4>
                 <ul className="feed">
                   {detalle.datos.movimientos.map((m, i) => (
-                    <li key={i}>
-                      <span className="chico">{hora(m.creado)}</span>
-                      <span className="fila" style={{ justifyContent: 'space-between' }}>
-                        <span>{m.concepto || m.tipo}<span className="chico" style={{ display: 'block' }}>vía {m.origen}</span></span>
-                        <b style={{ color: m.tipo === 'CREDITO' ? 'var(--mar)' : 'var(--senal)' }}>{m.tipo === 'CREDITO' ? '+' : '−'}{dinero(m.monto)}</b>
-                      </span>
+                    <li key={i} style={{ gridTemplateColumns: '28px 1fr auto', alignItems: 'center' }}>
+                      {m.tipo === 'CREDITO' ? <ArrowDownLeft size={18} color="var(--ok)" aria-hidden /> : <ArrowUpRight size={18} color="var(--mal)" aria-hidden />}
+                      <span>{m.concepto || m.tipo}<span className="chico" style={{ display: 'block' }}>{hora(m.creado)} · vía {m.origen}</span></span>
+                      <b style={{ color: m.tipo === 'CREDITO' ? 'var(--ok)' : 'var(--mal)' }}>{m.tipo === 'CREDITO' ? '+' : '−'}{dinero(m.monto)}</b>
                     </li>
                   ))}
-                  {detalle.datos.movimientos.length === 0 && <li><span /> <span className="chico">Aún no tienes movimientos.</span></li>}
+                  {detalle.datos.movimientos.length === 0 && <li><span /><span className="chico">Aún no tienes movimientos.</span></li>}
                 </ul>
               </>
             )}
           </div>
         </div>
-      )}
+        <aside className="tarjeta tarjeta-cuerpo pila" style={{ gap: 12 }}>
+          <label className="campo">
+            ¿Quién eres?
+            <select value={cuenta} onChange={(e) => elegir(e.target.value)}>
+              <option value="">Elige tu nombre</option>
+              {personas.map((c) => <option key={c.numero} value={c.numero}>{c.nombre}{c.equipo ? ` · ${c.equipo}` : ''}</option>)}
+            </select>
+          </label>
+          <p className="chico">El saldo se actualiza solo cada 3 segundos. Si el docente paga la nómina, verás el crédito con el texto "vía BCE/FARO".</p>
+          {clientes.error && <Problema error={clientes.error} />}
+        </aside>
+      </div>
     </>
   );
 }
