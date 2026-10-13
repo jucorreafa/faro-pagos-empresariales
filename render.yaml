@@ -9,7 +9,7 @@ services:
     name: faro-uide-banco
     runtime: docker
     plan: free
-    region: virginia
+    region: oregon
     rootDir: servicios/banco-andino
     dockerfilePath: ./servicios/banco-andino/Dockerfile
     dockerContext: ./servicios/banco-andino
@@ -26,7 +26,7 @@ services:
     name: faro-uide-bce
     runtime: docker
     plan: free
-    region: virginia
+    region: oregon
     rootDir: servicios/bce
     dockerfilePath: ./servicios/bce/Dockerfile
     dockerContext: ./servicios/bce
