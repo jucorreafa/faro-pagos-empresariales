@@ -1,5 +1,8 @@
+# ---------------------------------------------------------------
 # CI (adelanto de S8): en cada cambio a main, GitHub construye las 3
-# imágenes Docker y las publica en GitHub Container Registry.
+# imágenes Docker y las publica en GitHub Container Registry (gratis
+# en repositorios públicos). Kubernetes (carpeta k8s/) usa esas imágenes.
+# ---------------------------------------------------------------
 name: Imagenes Docker
 on:
   push:
