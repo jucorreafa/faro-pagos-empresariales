@@ -1,8 +1,8 @@
 # ---------------------------------------------------------------
 # Blueprint de Render: crea los 3 servicios de Faro de una sola vez.
-# Render -> New -> Blueprint -> elegir el repositorio.
 # Los valores "sync: false" (secretos) los pide Render al crear.
 # plan: free es OBLIGATORIO (si se omite, Render usa un plan pagado).
+# Con rootDir, las rutas del Dockerfile son RELATIVAS a esa carpeta.
 # ---------------------------------------------------------------
 services:
   - type: web
@@ -11,8 +11,8 @@ services:
     plan: free
     region: oregon
     rootDir: servicios/banco-andino
-    dockerfilePath: ./servicios/banco-andino/Dockerfile
-    dockerContext: ./servicios/banco-andino
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /salud
     envVars:
       - key: DATABASE_URL
@@ -28,8 +28,8 @@ services:
     plan: free
     region: oregon
     rootDir: servicios/bce
-    dockerfilePath: ./servicios/bce/Dockerfile
-    dockerContext: ./servicios/bce
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /salud
     envVars:
       - key: DATABASE_URL
@@ -51,8 +51,8 @@ services:
     plan: free
     region: oregon
     rootDir: servicios/faro-api
-    dockerfilePath: ./servicios/faro-api/Dockerfile
-    dockerContext: ./servicios/faro-api
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /salud
     envVars:
       - key: DATABASE_URL
