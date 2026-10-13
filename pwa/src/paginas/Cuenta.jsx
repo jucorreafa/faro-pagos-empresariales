@@ -24,7 +24,9 @@ export default function Cuenta() {
   }, [detalle.datos?.saldo]);
 
   const elegir = (v) => { anterior.current = null; setCuenta(v); guardar(v); };
-  const personas = (clientes.datos || []).filter((c) => c.tipo_cliente === 'PERSONA');
+  const todos = clientes.datos || [];
+  const empresas = todos.filter((c) => c.tipo_cliente === 'EMPRESA');
+  const personas = todos.filter((c) => c.tipo_cliente === 'PERSONA');
 
   return (
     <>
@@ -36,7 +38,7 @@ export default function Cuenta() {
         <div className="pantalla-banco">
           <header><Building2 size={18} aria-hidden /> Banco Andino · Banca en línea</header>
           <div className="cuerpo">
-            {!cuenta && <p className="chico">Elige tu nombre para ver tu cuenta.</p>}
+            {!cuenta && <p className="chico">Elige una cuenta para ver su saldo.</p>}
             {cuenta && !detalle.datos && <Cargando texto="Consultando tu cuenta…" />}
             {detalle.datos && (
               <>
@@ -65,11 +67,17 @@ export default function Cuenta() {
           <label className="campo">
             ¿Quién eres?
             <select value={cuenta} onChange={(e) => elegir(e.target.value)}>
-              <option value="">Elige tu nombre</option>
-              {personas.map((c) => <option key={c.numero} value={c.numero}>{c.nombre}{c.equipo ? ` · ${c.equipo}` : ''}</option>)}
+              <option value="">Elige una cuenta</option>
+              <optgroup label="Empleados (estudiantes)">
+                {personas.map((c) => <option key={c.numero} value={c.numero}>{c.nombre}{c.equipo ? ` · ${c.equipo}` : ''}</option>)}
+              </optgroup>
+              <optgroup label="Empresas">
+                {empresas.map((c) => <option key={c.numero} value={c.numero}>{c.nombre}</option>)}
+              </optgroup>
             </select>
           </label>
-          <p className="chico">El saldo se actualiza solo cada 3 segundos. Si el docente paga la nómina, verás el crédito con el texto "vía BCE/FARO".</p>
+          <p className="chico">El saldo se actualiza solo cada 3 segundos. En un empleado verás el sueldo como crédito "vía BCE/FARO". En <b>Andes Café</b> (la empresa) verás cada pago como débito "vía FARO": su saldo baja.</p>
+          {empresas[0] && <button className="boton sec" onClick={() => elegir(empresas.find((e) => e.cliente === 'ANDESCAFE')?.numero || empresas[0].numero)}>Ver la cuenta de la empresa</button>}
           {clientes.error && <Problema error={clientes.error} />}
         </aside>
       </div>

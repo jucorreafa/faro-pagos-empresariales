@@ -74,7 +74,7 @@ export default function Tablero() {
                   <div key={x.codigo} className="fila entre" style={{ flexWrap: 'nowrap' }}>
                     <div style={{ minWidth: 0 }}>
                       <b style={{ fontSize: 14 }}>{x.codigo}</b>
-                      <div className="chico">{x.enviadas} enviadas · {x.recibidas} recibidas</div>
+                      <div className="chico">{x.enviadas} enviadas · {x.recibidas} recibidas · liquidación {dinero(x.saldo_liquidacion)}</div>
                     </div>
                     {x.ultima_conexion
                       ? <span className="etiqueta e-ok">{hora(x.ultima_conexion)}</span>
