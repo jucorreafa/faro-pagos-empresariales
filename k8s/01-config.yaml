@@ -1,0 +1,26 @@
+# Configuración NO secreta (URLs internas). Kubernetes da a cada Service un
+# nombre DNS: http://<servicio>.<namespace>.svc  -> http://bce.faro.svc
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: faro-config
+  namespace: faro
+data:
+  BANCO_ANDINO_URL: "http://banco-andino:8080"
+  BCE_URL: "http://bce:8080"
+  LOG_LEVEL: "info"
+---
+# Secretos: en un clúster real NO se escriben en un archivo del repositorio.
+# Se crean con:  kubectl -n faro create secret generic faro-secretos --from-literal=...
+# Este archivo es solo un EJEMPLO con valores de mentira.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: faro-secretos
+  namespace: faro
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql://usuario:clave@servidor:5432/postgres"
+  INTERNAL_KEY: "cambiar"
+  ADMIN_KEY: "cambiar"
+  BCE_API_KEY: "cambiar"

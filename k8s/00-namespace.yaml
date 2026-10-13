@@ -1,0 +1,7 @@
+# Un "barrio" propio para Faro dentro del clúster (aislamiento lógico).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: faro
+  labels:
+    proyecto: faro-uide

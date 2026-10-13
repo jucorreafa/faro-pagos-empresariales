@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------
+# FARO en tu computadora (S7). Requiere Docker Desktop.
+#   1) Copia .env.ejemplo como .env y completa las llaves.
+#   2) docker compose up --build
+#   3) Abre http://localhost:8100/docs (Faro), :8101/docs (BCE), :8102/docs (Banco)
+# Cada servicio corre en SU contenedor; la base de datos en otro.
+# ---------------------------------------------------------------
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: faro-local
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d:ro     # crea esquemas y datos semilla
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 10
+
+  banco-andino:
+    build: ./servicios/banco-andino
+    environment:
+      DATABASE_URL: postgres://postgres:faro-local@db:5432/postgres
+      INTERNAL_KEY: ${INTERNAL_KEY}
+      ADMIN_KEY: ${ADMIN_KEY}
+    ports: ["8102:8080"]
+    depends_on: { db: { condition: service_healthy } }
+    deploy: { resources: { limits: { cpus: "0.25", memory: 256M } } }   # límites = aislamiento
+
+  bce:
+    build: ./servicios/bce
+    environment:
+      DATABASE_URL: postgres://postgres:faro-local@db:5432/postgres
+      INTERNAL_KEY: ${INTERNAL_KEY}
+      ADMIN_KEY: ${ADMIN_KEY}
+      BANCO_ANDINO_URL: http://banco-andino:8080
+    ports: ["8101:8080"]
+    depends_on: { db: { condition: service_healthy } }
+    deploy: { resources: { limits: { cpus: "0.25", memory: 256M } } }
+
+  faro-api:
+    build: ./servicios/faro-api
+    environment:
+      DATABASE_URL: postgres://postgres:faro-local@db:5432/postgres
+      INTERNAL_KEY: ${INTERNAL_KEY}
+      ADMIN_KEY: ${ADMIN_KEY}
+      BCE_API_KEY: ${BCE_API_KEY_FARO}
+      BANCO_ANDINO_URL: http://banco-andino:8080
+      BCE_URL: http://bce:8080
+    ports: ["8100:8080"]
+    depends_on: [bce, banco-andino]
+    restart: on-failure            # si el proceso muere, Docker lo levanta (demo "matar")
+    deploy: { resources: { limits: { cpus: "0.25", memory: 256M } } }

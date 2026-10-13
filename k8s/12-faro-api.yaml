@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: faro-api
+  namespace: faro
+  labels: { app: faro-api, capa: producto }
+spec:
+  replicas: 2            # Kubernetes mantiene SIEMPRE esta cantidad de pods vivos
+  selector:
+    matchLabels: { app: faro-api }
+  template:
+    metadata:
+      labels: { app: faro-api, capa: producto }
+    spec:
+      securityContext:
+        runAsNonRoot: true          # nunca como administrador
+      containers:
+        - name: faro-api
+          image: ghcr.io/jucorreafa/faro-faro-api:latest
+          ports: [{ containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: faro-config }
+            - secretRef: { name: faro-secretos }
+          resources:                 # límites = un servicio no puede "comerse" al otro
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits:   { cpu: "250m", memory: "256Mi" }
+          livenessProbe:             # ¿está vivo? si no, Kubernetes lo reinicia
+            httpGet: { path: /salud, port: 8080 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:            # ¿puede atender? si no, no le manda tráfico
+            httpGet: { path: /listo, port: 8080 }
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: faro-api
+  namespace: faro
+spec:
+  selector: { app: faro-api }
+  ports: [{ port: 8080, targetPort: 8080 }]

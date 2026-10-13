@@ -1,0 +1,19 @@
+# ---------------------------------------------------------------
+# AISLAMIENTO DE RED (lección del caso Monzo, S7):
+# por defecto NADIE puede hablar con el Banco Andino...
+# ---------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: banco-solo-bce-y-faro
+  namespace: faro
+spec:
+  podSelector:
+    matchLabels: { app: banco-andino }
+  policyTypes: [Ingress]
+  ingress:
+    # ...excepto el BCE y Faro, y solo por el puerto 8080.
+    - from:
+        - podSelector: { matchLabels: { app: bce } }
+        - podSelector: { matchLabels: { app: faro-api } }
+      ports: [{ port: 8080 }]

@@ -1,0 +1,69 @@
+# ---------------------------------------------------------------
+# Blueprint de Render: crea los 3 servicios de Faro de una sola vez.
+# Render -> New -> Blueprint -> elegir el repositorio.
+# Los valores "sync: false" (secretos) los pide Render al crear.
+# plan: free es OBLIGATORIO (si se omite, Render usa un plan pagado).
+# ---------------------------------------------------------------
+services:
+  - type: web
+    name: faro-uide-banco
+    runtime: docker
+    plan: free
+    region: virginia
+    rootDir: servicios/banco-andino
+    dockerfilePath: ./servicios/banco-andino/Dockerfile
+    dockerContext: ./servicios/banco-andino
+    healthCheckPath: /salud
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: INTERNAL_KEY
+        sync: false
+      - key: ADMIN_KEY
+        sync: false
+
+  - type: web
+    name: faro-uide-bce
+    runtime: docker
+    plan: free
+    region: virginia
+    rootDir: servicios/bce
+    dockerfilePath: ./servicios/bce/Dockerfile
+    dockerContext: ./servicios/bce
+    healthCheckPath: /salud
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: INTERNAL_KEY
+        sync: false
+      - key: ADMIN_KEY
+        sync: false
+      - key: BANCO_ANDINO_URL
+        value: https://faro-uide-banco.onrender.com
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+
+  - type: web
+    name: faro-uide-api
+    runtime: docker
+    plan: free
+    region: virginia
+    rootDir: servicios/faro-api
+    dockerfilePath: ./servicios/faro-api/Dockerfile
+    dockerContext: ./servicios/faro-api
+    healthCheckPath: /salud
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: INTERNAL_KEY
+        sync: false
+      - key: ADMIN_KEY
+        sync: false
+      - key: BCE_API_KEY
+        sync: false
+      - key: BANCO_ANDINO_URL
+        value: https://faro-uide-banco.onrender.com
+      - key: BCE_URL
+        value: https://faro-uide-bce.onrender.com

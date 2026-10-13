@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bce
+  namespace: faro
+  labels: { app: bce, capa: liquidacion }
+spec:
+  replicas: 1            # Kubernetes mantiene SIEMPRE esta cantidad de pods vivos
+  selector:
+    matchLabels: { app: bce }
+  template:
+    metadata:
+      labels: { app: bce, capa: liquidacion }
+    spec:
+      securityContext:
+        runAsNonRoot: true          # nunca como administrador
+      containers:
+        - name: bce
+          image: ghcr.io/jucorreafa/faro-bce:latest
+          ports: [{ containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: faro-config }
+            - secretRef: { name: faro-secretos }
+          resources:                 # límites = un servicio no puede "comerse" al otro
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits:   { cpu: "250m", memory: "256Mi" }
+          livenessProbe:             # ¿está vivo? si no, Kubernetes lo reinicia
+            httpGet: { path: /salud, port: 8080 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:            # ¿puede atender? si no, no le manda tráfico
+            httpGet: { path: /listo, port: 8080 }
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bce
+  namespace: faro
+spec:
+  selector: { app: bce }
+  ports: [{ port: 8080, targetPort: 8080 }]
