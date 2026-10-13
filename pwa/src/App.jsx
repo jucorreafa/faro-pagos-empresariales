@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Route, Landmark, Wallet, KeyRound, ChevronRight, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Route, Landmark, Wallet, KeyRound, ChevronRight, ShieldCheck, Smartphone, X } from 'lucide-react';
 import { useSaludSistema } from './hooks.js';
 import { NOMBRES, llaveDocente } from './api.js';
 import Inicio, { ESTACIONES } from './paginas/Inicio.jsx';
@@ -36,6 +36,34 @@ function Logo({ tam = 30 }) {
   );
 }
 
+// ¿Estamos dentro del marco de "vista celular"? (la app se carga a sí misma en un iframe)
+const INCRUSTADO = (() => { try { return window.self !== window.top; } catch { return true; } })();
+
+/** Muestra la app dentro de un teléfono, a tamaño real de celular (390 × 844). */
+function VistaCelular({ onCerrar }) {
+  const [escala, setEscala] = useState(1);
+  useEffect(() => {
+    const calc = () => setEscala(Math.min(1, (window.innerHeight - 120) / 880));
+    calc();
+    window.addEventListener('resize', calc);
+    const esc = (e) => e.key === 'Escape' && onCerrar();
+    window.addEventListener('keydown', esc);
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('keydown', esc); };
+  }, [onCerrar]);
+  return (
+    <div className="marco-fondo" role="dialog" aria-label="Vista celular">
+      <div className="marco-barra">
+        <span>Vista celular · así se ve Faro instalada en un teléfono</span>
+        <button className="boton sec chico" onClick={onCerrar}><X size={16} aria-hidden /> Salir</button>
+      </div>
+      <div className="telefono" style={{ transform: `scale(${escala})` }}>
+        <span className="isla" aria-hidden />
+        <iframe title="Faro en el celular" src={window.location.href} />
+      </div>
+    </div>
+  );
+}
+
 function useRuta() {
   const leer = () => window.location.hash.replace(/^#\/?/, '') || 'inicio';
   const [ruta, setRuta] = useState(leer);
@@ -55,6 +83,7 @@ export default function App() {
   const seccion = estacion ? 'estaciones' : ruta;
   const actual = (id) => (id === seccion ? 'page' : undefined);
   const docente = !!llaveDocente();
+  const [celular, setCelular] = useState(false);
 
   return (
     <div className="app">
@@ -96,6 +125,7 @@ export default function App() {
           </nav>
           <div className="fila">
             {docente && <span className="etiqueta e-luz"><ShieldCheck size={14} aria-hidden /> Docente</span>}
+            {!INCRUSTADO && <button className="boton sec chico boton-celular" onClick={() => setCelular(true)}><Smartphone size={16} aria-hidden /> Vista celular</button>}
             <div className="luces-movil" aria-label="Estado de los servicios">
               {Object.entries(estado).map(([s, e]) => <span key={s} className={`punto ${e}`} title={`${NOMBRES[s]}: ${TEXTO_LUZ[e]}`} />)}
             </div>
@@ -106,6 +136,8 @@ export default function App() {
           {Pagina ? <Pagina /> : <Inicio estado={estado} />}
         </main>
       </div>
+
+      {celular && <VistaCelular onCerrar={() => setCelular(false)} />}
 
       <nav className="nav-movil" aria-label="Secciones">
         {NAV.map(([id, texto, Icono]) => (
