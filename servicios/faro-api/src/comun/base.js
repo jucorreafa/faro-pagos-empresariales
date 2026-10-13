@@ -86,6 +86,7 @@ export async function crearApp({ nombre, titulo, descripcion, version = '1.0.0',
 
   await app.register(cors, {
     origin: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     exposedHeaders: ['Idempotent-Replayed', 'X-Correlation-Id', 'X-Servicio'],
   });
 
