@@ -26,6 +26,18 @@ function cacheMemoria() {
       return true;
     },
     async del(k) { datos.delete(k); },
+    // S8 · CI/CD: un redespliegue del BCE (una sola réplica, sin Redis) pierde
+    // esta memoria. Lo modelamos borrando las llaves con un prefijo.
+    async flushPrefijo(pref) {
+      let n = 0;
+      for (const k of [...datos.keys()]) if (k.startsWith(pref)) { datos.delete(k); n += 1; }
+      return n;
+    },
+    async contar(pref) {
+      let n = 0;
+      for (const k of [...datos.keys()]) if (k.startsWith(pref) && vivo(k)) n += 1;
+      return n;
+    },
   };
 }
 
@@ -37,6 +49,12 @@ function cacheUpstash(url, token) {
     async set(k, v, segundos) { await r.set(k, v, { ex: segundos }); },
     async setNX(k, v, segundos) { return (await r.set(k, v, { nx: true, ex: segundos })) === 'OK'; },
     async del(k) { await r.del(k); },
+    async flushPrefijo(pref) {
+      try { const ks = await r.keys(`${pref}*`); if (ks?.length) await r.del(...ks); return ks?.length || 0; } catch { return 0; }
+    },
+    async contar(pref) {
+      try { const ks = await r.keys(`${pref}*`); return ks?.length || 0; } catch { return 0; }
+    },
   };
 }
 
@@ -52,4 +70,13 @@ export const cache = {
   async set(k, v, s) { try { await principal.set(k, v, s); } catch { await memoria.set(k, v, s); } },
   async setNX(k, v, s) { try { return await principal.setNX(k, v, s); } catch { return memoria.setNX(k, v, s); } },
   async del(k) { try { await principal.del(k); } catch { await memoria.del(k); } },
+  // S8 · CI/CD. Vacía la caché de idempotencia (y los candados), como ocurriría
+  // en un redespliegue del BCE cuando la caché vive en memoria.
+  async flushIdempotencia() {
+    let n = 0;
+    try { n += await principal.flushPrefijo('idem:'); await principal.flushPrefijo('lock:'); } catch { /* seguimos */ }
+    if (principal !== memoria) { await memoria.flushPrefijo('idem:'); await memoria.flushPrefijo('lock:'); }
+    return n;
+  },
+  async contarIdempotencia() { try { return await principal.contar('idem:'); } catch { return 0; } },
 };

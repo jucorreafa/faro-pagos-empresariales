@@ -434,4 +434,171 @@ app.get('/listo', { schema: { tags: ['Operación'], summary: 'Readiness: base de
   return { listo: true, cache: cache.tipo };
 });
 
+// ===========================================================================
+// S8 · CI/CD y despliegues. [SIMULADO · solo demostración de la semana 8]
+// Modela, sobre el BCE que usan los 4 equipos, qué cambia entre publicar un
+// cambio CON controles (pruebas + aprobación) y SIN controles, y por qué la
+// idempotencia debe apoyarse en la base de datos y no solo en la caché.
+// No mueve dinero real: la prueba del doble cobro ocurre dentro de una
+// transacción que SIEMPRE se revierte (rollback).
+// ===========================================================================
+const DEMO_ORIGEN = 'FARO';
+const DEMO_DESTINO = 'BAS';
+const CLAVE_DEMO = `idem:${DEMO_ORIGEN}:demo-despliegue-s8`;
+
+const despliegue = {
+  version: process.env.APP_VERSION || '1.0.0',
+  canal: 'estable',
+  pruebas: 'verdes',
+  aprobadoPor: 'despliegue inicial',
+  ultimoModo: null,
+  desde: new Date().toISOString(),
+  anterior: null,
+  historial: [],
+};
+
+function requiereDocente(req) {
+  const llave = process.env.ADMIN_KEY;
+  const dado = String(req.headers['x-admin-key'] || '');
+  const ok = llave && dado.length === llave.length
+    && crypto.timingSafeEqual(Buffer.from(dado), Buffer.from(llave));
+  if (!ok) throw new Problema(401, 'ADMIN_REQUERIDO', 'Solo el docente', 'Se requiere la cabecera X-Admin-Key válida.');
+}
+
+function subirVersion(v, parte) {
+  const n = String(v).split('.').map((x) => parseInt(x, 10) || 0);
+  while (n.length < 3) n.push(0);
+  if (parte === 'minor') { n[1] += 1; n[2] = 0; } else { n[2] += 1; }
+  return n.join('.');
+}
+
+async function instantanea() {
+  return {
+    version: despliegue.version,
+    canal: despliegue.canal,
+    pruebas: despliegue.pruebas,
+    aprobadoPor: despliegue.aprobadoPor,
+    ultimoModo: despliegue.ultimoModo,
+    desde: despliegue.desde,
+    puedeVolverAtras: Boolean(despliegue.anterior),
+    cacheTipo: cache.tipo,
+    cacheLlaves: await cache.contarIdempotencia(),
+    cacheDemoPresente: Boolean(await cache.get(CLAVE_DEMO)),
+    historial: despliegue.historial.slice(-6),
+  };
+}
+
+// Prueba honesta del doble cobro: inserta dos veces la MISMA llave de
+// idempotencia en una transacción que se revierte. La segunda la rechaza la
+// restricción UNIQUE (participante_origen, idempotency_key). No persiste nada.
+async function probarBarreraBase() {
+  const cli = await pool.connect();
+  const llave = `demo-barrera-${crypto.randomUUID()}`;
+  const fila = (k) => [crypto.randomUUID(), 'DEMO', 'DEMO', DEMO_ORIGEN, DEMO_DESTINO,
+    'Demostración', '0000', 'Demostración', '0000', 0.01, 'USD', 'demo S8', 'ACSC',
+    null, null, k, 'demo', JSON.stringify({ demo: true })];
+  const sql = `insert into bce.transferencias
+    (id,msg_id,end_to_end_id,participante_origen,participante_destino,deudor_nombre,deudor_cuenta,
+     acreedor_nombre,acreedor_cuenta,monto,moneda,concepto,estado,motivo_codigo,motivo_texto,
+     idempotency_key,request_hash,respuesta)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`;
+  try {
+    await cli.query('begin');
+    await cli.query(sql, fila(llave));           // primer pago
+    let rechazado = false; let codigo = null;
+    try {
+      await cli.query(sql, fila(llave));         // reintento con la MISMA llave
+    } catch (e) {
+      if (e.code === '23505') { rechazado = true; codigo = '23505'; } else throw e;
+    }
+    await cli.query('rollback');                 // nada de esto queda guardado
+    return { rechazado, codigo };
+  } catch (e) {
+    await cli.query('rollback').catch(() => {});
+    throw e;
+  } finally {
+    cli.release();
+  }
+}
+
+app.get('/v1/despliegue', {
+  schema: { tags: ['Despliegue (S8)'], summary: 'Estado del despliegue del BCE (versión, canal, caché)' },
+}, async () => instantanea());
+
+app.post('/v1/admin/demo/pago', {
+  schema: { tags: ['Despliegue (S8)'], summary: 'Simular un pago liquidado que guarda su respuesta en la caché', security: [{ Admin: [] }] },
+}, async (req) => {
+  requiereDocente(req);
+  await cache.set(CLAVE_DEMO, { huella: 'demo', respuesta: { transferenciaId: 'demo-s8', estado: 'ACSC', demo: true } }, TTL_IDEMPOTENCIA);
+  return { mensaje: 'Pago de demostración liquidado. Su respuesta quedó en la caché de idempotencia.', cacheTipo: cache.tipo, cacheDemoPresente: true };
+});
+
+app.post('/v1/admin/demo/reintento', {
+  schema: { tags: ['Despliegue (S8)'], summary: 'Reintentar el mismo pago: ver qué barrera evita el doble cobro', security: [{ Admin: [] }] },
+}, async (req) => {
+  requiereDocente(req);
+  const cacheReconoce = Boolean(await cache.get(CLAVE_DEMO));
+  const barrera = await probarBarreraBase();
+  return {
+    cacheTipo: cache.tipo,
+    cacheReconoce,
+    baseRechazoDuplicado: barrera.rechazado,
+    codigoBase: barrera.codigo,
+    mensaje: cacheReconoce
+      ? 'La caché reconoció el pago y repitió la misma respuesta: no se cobró dos veces.'
+      : 'La caché ya no recuerda el pago (se perdió en el despliegue), pero la base de datos rechazó el duplicado (UNIQUE): el dinero quedó protegido por la base.',
+  };
+});
+
+app.post('/v1/admin/desplegar', {
+  schema: {
+    tags: ['Despliegue (S8)'],
+    summary: 'Publicar una versión nueva del BCE, con o sin controles',
+    security: [{ Admin: [] }],
+    body: {
+      type: 'object',
+      required: ['modo'],
+      additionalProperties: false,
+      properties: { modo: { type: 'string', enum: ['con-controles', 'sin-controles'] } },
+    },
+  },
+}, async (req) => {
+  requiereDocente(req);
+  const { modo } = req.body;
+  despliegue.anterior = { version: despliegue.version, canal: despliegue.canal, pruebas: despliegue.pruebas, aprobadoPor: despliegue.aprobadoPor };
+  let cacheVaciada = 0;
+  if (modo === 'con-controles') {
+    despliegue.version = subirVersion(despliegue.version, 'minor');
+    despliegue.canal = 'estable';
+    despliegue.pruebas = 'verdes';
+    despliegue.aprobadoPor = 'docente (segunda persona)';
+  } else {
+    despliegue.version = subirVersion(despliegue.version, 'patch');
+    despliegue.canal = 'directo a main';
+    despliegue.pruebas = 'no ejecutadas';
+    despliegue.aprobadoPor = 'nadie';
+    cacheVaciada = await cache.flushIdempotencia();
+  }
+  despliegue.ultimoModo = modo;
+  despliegue.desde = new Date().toISOString();
+  despliegue.historial.push({ version: despliegue.version, modo, pruebas: despliegue.pruebas, aprobadoPor: despliegue.aprobadoPor, cuando: despliegue.desde });
+  await registrarEvento('DESPLIEGUE', 'FARO', { modo, version: despliegue.version, pruebas: despliegue.pruebas, cacheVaciada });
+  return { ...(await instantanea()), cacheVaciada };
+});
+
+app.post('/v1/admin/desplegar/volver-atras', {
+  schema: { tags: ['Despliegue (S8)'], summary: 'Volver a la versión anterior (rollback)', security: [{ Admin: [] }] },
+}, async (req) => {
+  requiereDocente(req);
+  if (!despliegue.anterior) throw new Problema(409, 'SIN_VERSION_ANTERIOR', 'No hay versión anterior', 'Todavía no se ha hecho ningún despliegue en esta sesión.');
+  const a = despliegue.anterior;
+  despliegue.version = a.version; despliegue.canal = a.canal; despliegue.pruebas = a.pruebas; despliegue.aprobadoPor = a.aprobadoPor;
+  despliegue.anterior = null;
+  despliegue.ultimoModo = 'volver-atras';
+  despliegue.desde = new Date().toISOString();
+  despliegue.historial.push({ version: despliegue.version, modo: 'volver-atras', pruebas: despliegue.pruebas, aprobadoPor: despliegue.aprobadoPor, cuando: despliegue.desde });
+  await registrarEvento('DESPLIEGUE', 'FARO', { modo: 'volver-atras', version: despliegue.version });
+  return instantanea();
+});
+
 await arrancar(app);
