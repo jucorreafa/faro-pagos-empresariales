@@ -12,6 +12,7 @@ import {
 } from './comun/base.js';
 import { cache } from './cache.js';
 import { pacs008Xml, pacs002Xml, MOTIVOS } from './iso20022.js';
+import { instalarMetricas } from './metricas.js';
 
 const pool = crearPool();
 const BANCO_ANDINO_URL = (process.env.BANCO_ANDINO_URL || 'http://localhost:8102').replace(/\/$/, '');
@@ -40,9 +41,13 @@ BAS (Banco Andino Simulado), FARO, BILLETERA, NEXOCREDIT, REMESAS, AGROANTICIPO.
     { name: 'Participantes', description: 'Su conexión con el BCE y su webhook' },
     { name: 'Tablero público', description: 'Lo que se proyecta en clase' },
     { name: 'Operación', description: 'Salud, caos y reinicio' },
+    { name: 'Despliegue (S8)', description: 'Versión, controles y la prueba del doble cobro' },
+    { name: 'Observabilidad (S9)', description: 'Métricas, SLI y ritmo de consumo en vivo' },
   ],
 });
 rutasAdmin(app);
+// S9: se instala ANTES de las demás rutas para que su hook cuente todas las respuestas.
+instalarMetricas(app, { requiereDocente, caos });
 
 // ---------------------------------------------------------------- utilidades
 async function registrarEvento(tipo, participante, detalle = {}) {

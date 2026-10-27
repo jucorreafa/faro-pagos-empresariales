@@ -118,7 +118,7 @@ export async function crearApp({ nombre, titulo, descripcion, version = '1.0.0',
 
   // Caos: se aplica a todo menos salud, documentación y administración.
   app.addHook('onRequest', async (req) => {
-    const libre = /^\/(salud|listo|docs|v1\/admin)/.test(req.url) || req.method === 'OPTIONS';
+    const libre = /^\/(salud|listo|docs|metrics|v1\/metricas|v1\/admin)/.test(req.url) || req.method === 'OPTIONS';
     if (libre) return;
     if (caos.latenciaMs > 0) await dormir(caos.latenciaMs);
     if (!caos.disponible) {

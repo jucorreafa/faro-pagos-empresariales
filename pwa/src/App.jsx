@@ -14,8 +14,9 @@ import S4 from './estaciones/S4.jsx';
 import S6 from './estaciones/S6.jsx';
 import S7 from './estaciones/S7.jsx';
 import S8 from './estaciones/S8.jsx';
+import S9 from './estaciones/S9.jsx';
 
-const PAGINAS = { s1: S1, s2: S2, s3: S3, s4: S4, s6: S6, s7: S7, s8: S8, estaciones: Estaciones, tablero: Tablero, cuenta: Cuenta, docente: Docente };
+const PAGINAS = { s1: S1, s2: S2, s3: S3, s4: S4, s6: S6, s7: S7, s8: S8, s9: S9, estaciones: Estaciones, tablero: Tablero, cuenta: Cuenta, docente: Docente };
 const TITULOS = { inicio: 'Inicio', estaciones: 'Estaciones', tablero: 'Tablero del BCE', cuenta: 'Mi cuenta', docente: 'Modo docente' };
 const TEXTO_LUZ = { ok: 'Responde', despertando: 'Despertando…', apagado: 'Apagado', caido: 'Sin respuesta' };
 const NAV = [

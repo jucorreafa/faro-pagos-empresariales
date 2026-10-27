@@ -1,4 +1,4 @@
-import { Map, Hexagon, ShieldCheck, Repeat, Activity, Boxes, Rocket, GraduationCap, Lock, ArrowRight } from 'lucide-react';
+import { Map, Hexagon, ShieldCheck, Repeat, Activity, Boxes, Rocket, Gauge, GraduationCap, Lock, ArrowRight } from 'lucide-react';
 import { FaroSvg } from '../componentes/comunes.jsx';
 
 export const ESTACIONES = [
@@ -10,8 +10,9 @@ export const ESTACIONES = [
   { s: 6, ruta: 's6', icono: Activity, titulo: 'Saga, Circuit Breaker y Bulkhead', texto: 'Apaga el banco y mira cómo reacciona el sistema.' },
   { s: 7, ruta: 's7', icono: Boxes, titulo: 'Contenedores y orquestación', texto: 'Mata un contenedor y mira cómo revive.' },
   { s: 8, ruta: 's8', icono: Rocket, titulo: 'CI/CD y despliegues', texto: 'Publica con y sin controles; mira qué protege el dinero.' },
+  { s: 9, ruta: 's9', icono: Gauge, titulo: 'Observabilidad: SLI y SLO', texto: 'Mide si el BCE cumple su promesa y cuándo despertaría a alguien.' },
 ];
-export const PROXIMAS = ['Observabilidad', 'Modelado de amenazas', 'OAuth 2.0 y JWT', 'Cifrado y TLS', 'KYC y AML', 'Auditoría'];
+export const PROXIMAS = ['Modelado de amenazas', 'OAuth 2.0 y JWT', 'Cifrado y TLS', 'KYC y AML', 'Auditoría'];
 
 export function TarjetaEstacion({ e }) {
   const Ico = e.icono;
