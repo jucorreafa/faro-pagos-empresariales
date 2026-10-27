@@ -72,7 +72,7 @@ export default function Inicio({ estado }) {
           {ESTACIONES.map((e) => <TarjetaEstacion key={e.s} e={e} />)}
           <div className="tarjeta tarjeta-estacion cerrada">
             <span className="ico"><Lock size={18} aria-hidden /></span>
-            <div><span className="chico">Semanas 8 a 16</span><h3>Próximas estaciones</h3></div>
+            <div><span className="chico">Semanas 10 a 16</span><h3>Próximas estaciones</h3></div>
             <p>{PROXIMAS.join(' · ')}</p>
           </div>
         </div>

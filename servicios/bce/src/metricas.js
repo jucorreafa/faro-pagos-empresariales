@@ -92,8 +92,8 @@ export function instalarMetricas(app, { requiereDocente, caos }) {
     const sliLat = todo.total > 0 ? todo.rapidas / todo.total : null;
     const pagina = r60 !== null && r5 !== null && r60 >= 14.4 && r5 >= 14.4;
     const ticket = r360 !== null && r30 !== null && r360 >= 3 && r30 >= 3;
-    const ingenua = (() => { // la regla «mala»: más de 1 % de error en el último minuto
-      const u = ventana(1); return u.tasaError !== null && u.tasaError > 0.01;
+    const ingenua = (() => { // la regla «mala»: más de 1 % de error en los últimos 2 minutos
+      const u = ventana(2); return u.tasaError !== null && u.tasaError > 0.01;
     })();
     const horasHasta = (r) => (r && r > 0 ? Math.round((720 / r) * 10) / 10 : null);
     const ahora = Math.floor(Date.now() / 60000);
@@ -115,7 +115,7 @@ export function instalarMetricas(app, { requiereDocente, caos }) {
       alertas: {
         pagina: { regla: 'ritmo ≥ 14,4 en 1 h y en 5 min', activa: pagina },
         ticket: { regla: 'ritmo ≥ 3 en 6 h y en 30 min', activa: ticket },
-        ingenua: { regla: 'más de 1 % de error en el último minuto', activa: ingenua },
+        ingenua: { regla: 'más de 1 % de error en los últimos 2 minutos', activa: ingenua },
       },
       serie,
       caos: { disponible: caos.disponible, latenciaMs: caos.latenciaMs, tasaFalla: caos.tasaFalla },
