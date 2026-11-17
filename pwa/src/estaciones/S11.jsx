@@ -130,8 +130,8 @@ export default function S11() {
         <BtnProbar p={llaveFalsa} Ico={KeyRound}>Llamar con llave falsa</BtnProbar>
         <Respuesta r={llaveFalsa.r} />
       </Paso>
-      <Paso n={3} titulo="Llave válida, orden de otro" ayuda="Una llave válida no basta: la orden debe ser del dueño de la llave. Pega la llave de cualquier participante del BCE (sirve la de FARO; solo se usa en esta pantalla, no se guarda). La orden dice ser de otro participante. Amenaza que atiende: E (elevación de privilegios).">
-        <input type="password" autoComplete="off" placeholder="Llave X-Api-Key de un participante (ej. FARO)" value={llave} onChange={(e) => setLlave(e.target.value)} style={{ width: '100%', marginBottom: 8 }} />
+      <Paso n={3} titulo="Llave válida, orden de otro" ayuda="Una llave válida no basta: la orden debe ser del dueño de la llave. Este paso lo hace el docente en clase: necesita la llave de un participante del BCE, que solo él tiene (solo se usa en esta pantalla, no se guarda). La orden dice ser de otro participante. Los pasos 1, 2 y 4 no piden llave. Amenaza que atiende: E (elevación de privilegios).">
+        <input type="password" autoComplete="off" placeholder="Llave X-Api-Key de un participante (la tiene el docente)" value={llave} onChange={(e) => setLlave(e.target.value)} style={{ width: '100%', marginBottom: 8 }} />
         <button className="boton" onClick={otroAgente.ejecutar} disabled={otroAgente.cargando || !llave}>
           {otroAgente.cargando ? <Loader2 size={16} className="gira" aria-hidden /> : <ShieldX size={16} aria-hidden />} Enviar una orden a nombre de otro participante
         </button>
