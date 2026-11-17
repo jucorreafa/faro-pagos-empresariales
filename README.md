@@ -24,7 +24,7 @@ Faro "ilumina" a los proyectos de los estudiantes: cada semana del curso es una 
 ```
 
 ## Estaciones (semana → concepto)
-S1 Arquitectura de referencia/BIAN · S2 Hexagonal y CQRS · S3 Open Banking · S4 OpenAPI, idempotencia, errores RFC 9457 e ISO 20022 · S6 Saga, Circuit Breaker, Bulkhead · S7 Docker y Kubernetes.
+S1 Arquitectura de referencia/BIAN · S2 Hexagonal y CQRS · S3 Open Banking · S4 OpenAPI, idempotencia, errores RFC 9457 e ISO 20022 · S6 Saga, Circuit Breaker, Bulkhead · S7 Docker y Kubernetes · S8 CI/CD · S9 Observabilidad (SLI/SLO) · S11 Seguridad (STRIDE, 401/403, zero trust).
 
 ## Contratos (OpenAPI)
 Cada servicio publica su contrato en `/docs` (Swagger UI) y `/docs/json`.
