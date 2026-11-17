@@ -112,6 +112,7 @@ export default function S11() {
         ['STRIDE', 'Seis familias de amenaza: suplantación, alteración, repudio, divulgación, negación de servicio y elevación de privilegios. Un vocabulario común para revisar un diseño.'],
         ['Autenticar no es autorizar', '401 dice “no sé quién eres”. 403 dice “sé quién eres, pero esto no te toca”. El BCE hace las dos cosas.'],
         ['Zero trust', 'Ninguna llamada se acepta por venir “de adentro”: se verifica identidad y permiso en cada una. La regla de red del repositorio es solo una pieza (segmentación).'],
+        ['Hoy y mañana', 'Hoy solo Faro API llama al BCE. Los cuatro equipos tienen participante y llave, pero aún no se conectan: es una propuesta. Conectarlos es justo el tema del ADR-08.'],
         ['Propuesta, no construido', 'OAuth 2.0 con client credentials y token de 15 minutos es la propuesta del ADR-08. Hoy el BCE usa una llave fija X-Api-Key.'],
       ]}
       codigo={[
@@ -129,8 +130,8 @@ export default function S11() {
         <BtnProbar p={llaveFalsa} Ico={KeyRound}>Llamar con llave falsa</BtnProbar>
         <Respuesta r={llaveFalsa.r} />
       </Paso>
-      <Paso n={3} titulo="Llave válida, orden de otro" ayuda="Una llave válida no basta: la orden debe ser del dueño de la llave. Pega la llave de un equipo (solo se usa en esta pantalla, no se guarda). Amenaza que atiende: E (elevación de privilegios).">
-        <input type="password" autoComplete="off" placeholder="Llave X-Api-Key de un equipo" value={llave} onChange={(e) => setLlave(e.target.value)} style={{ width: '100%', marginBottom: 8 }} />
+      <Paso n={3} titulo="Llave válida, orden de otro" ayuda="Una llave válida no basta: la orden debe ser del dueño de la llave. Pega la llave de cualquier participante del BCE (sirve la de FARO; solo se usa en esta pantalla, no se guarda). La orden dice ser de otro participante. Amenaza que atiende: E (elevación de privilegios).">
+        <input type="password" autoComplete="off" placeholder="Llave X-Api-Key de un participante (ej. FARO)" value={llave} onChange={(e) => setLlave(e.target.value)} style={{ width: '100%', marginBottom: 8 }} />
         <button className="boton" onClick={otroAgente.ejecutar} disabled={otroAgente.cargando || !llave}>
           {otroAgente.cargando ? <Loader2 size={16} className="gira" aria-hidden /> : <ShieldX size={16} aria-hidden />} Enviar una orden a nombre de otro participante
         </button>
